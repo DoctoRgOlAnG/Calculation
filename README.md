@@ -18,8 +18,16 @@ cd Calculation
 ```
 
 2. Убедитесь, что Go установлен и находится в `$PATH` (проверить версию можно командой `go version`).
-
-3. Запустите API-сервер:
+3. Start testing
+    ```
+    go test ./internal
+    Answer
+    ok      doctor/internal 4.004s
+    ------------------------------
+    go test ./pkg
+    ok      doctor/pkg      0.172s
+    ```
+4. Запустите API-сервер:
 
 ```bash
 go run ./cmd/main.go
@@ -51,7 +59,7 @@ Example:
 
 ### Answer
 
-1. **Successful**
+- **Successful**
 
    **Status code:** `200 OK`  
    **Example:**
@@ -62,7 +70,7 @@ Example:
    }
    ```
 
-2. **Ответ по ошибке при обработки выражения**
+- **Ответ по ошибке при обработки выражения**
 
    **Статус-код:** `422 Unprocessable Entity`  
    **Example answer:**
@@ -73,7 +81,7 @@ Example:
    }
    ```
 
-3. **Неподдерживаемый метод**
+- **Неподдерживаемый метод**
 
    **Status code:** `405 Method Not Allowed`  
    **Example answer:**
@@ -84,7 +92,7 @@ Example:
    }
    ```
 
-4. **Not correct body**
+- **Not correct body**
 
    **Statuc code:** `400 Bad Request`  
    **Example answer:**
@@ -99,7 +107,7 @@ Example:
 
 ## Example
 
-1. **Successful**:
+- **Successful**:
 
 ```bash
 curl -H POST 'http://localhost:8080/api/v1/calculate' \
@@ -117,7 +125,7 @@ Answer:
 }
 ```
 
-2. **Error: not correct выражение**:
+- **Error: calculation**:
 
 ```bash
 curl -H POST 'http://localhost:8080/api/v1/calculate' \
@@ -135,7 +143,7 @@ Answer:
 }
 ```
 
-3. **Error: not correct method**:
+- **Error: not correct method**:
 
 ```bash
 curl -H GET 'http://localhost:8080/api/v1/calculate' \
