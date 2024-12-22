@@ -52,7 +52,7 @@ func TestCalc(t *testing.T) {
 		{
 			name:        "simple",
 			expression:  "1+1*",
-			expectedErr: "invalid expression",
+			expectedErr: "unmatched parentheses",
 		},
 		{
 			name:        "unmatched parentheses",
