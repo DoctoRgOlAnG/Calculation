@@ -41,13 +41,15 @@ func Calc(expression string) (float64, error) {
 			}
 			operators = append(operators, token)
 		} else {
-			return 0, fmt.Errorf("invalid token: %s", token)
+			return 0, fmt.Errorf("invalid character")
 		}
 	}
-
+	// if len(output) != 1 {
+	// 	return 0, errors.New("invalid expression")
+	// }
 	for len(operators) > 0 {
 		if len(output) < 2 {
-			return 0, errors.New("not enough values in stack")
+			return 0, errors.New("unmatched parentheses")
 		}
 		output = append(output, applyOperator(operators[len(operators)-1], &output))
 		operators = operators[:len(operators)-1]
