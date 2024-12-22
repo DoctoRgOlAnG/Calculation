@@ -9,29 +9,6 @@ import (
 	"net/http"
 )
 
-// type Config struct {
-// 	Addr string
-// }
-
-// func ConfigFromEnv() *Config {
-// 	config := new(Config)
-// 	config.Addr = os.Getenv("PORT")
-// 	if config.Addr == "" {
-// 		config.Addr = "8080"
-// 	}
-// 	return config
-// }
-
-// type Application struct {
-// 	config *Config
-// }
-
-// func New() *Application {
-// 	return &Application{
-// 		config: ConfigFromEnv(),
-// 	}
-// }
-
 func CalcHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, `{"error":"Wrong Method"}`, http.StatusMethodNotAllowed)
@@ -109,28 +86,6 @@ func CalcHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error writing response: %v", err)
 	}
 }
-
-// func Run() error {
-// 	for {
-// 		log.Println("input expression")
-// 		reader := bufio.NewReader(os.Stdin)
-// 		text, err := reader.ReadString('\n')
-// 		if err != nil {
-// 			log.Println("failed to read expression from console")
-// 		}
-// 		text = strings.TrimSpace(text)
-// 		if text == "exit" {
-// 			log.Println("application was successfully closed")
-// 			return nil
-// 		}
-// 		result, err := calculation.Calc(text)
-// 		if err != nil {
-// 			log.Println(text, "calculation failed with error:", err)
-// 		} else {
-// 			log.Println(text, "=", result)
-// 		}
-// 	}
-// }
 
 func RunServer() error {
 	http.HandleFunc("/api/v1/calculate", CalcHandler)

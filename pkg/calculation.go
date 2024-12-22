@@ -44,9 +44,6 @@ func Calc(expression string) (float64, error) {
 			return 0, fmt.Errorf("invalid character")
 		}
 	}
-	// if len(output) != 1 {
-	// 	return 0, errors.New("invalid expression")
-	// }
 	for len(operators) > 0 {
 		if len(output) < 2 {
 			return 0, errors.New("unmatched parentheses")
