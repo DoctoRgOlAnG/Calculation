@@ -6,8 +6,6 @@ import (
 )
 
 func main() {
-	// app := app.New()
-	// fmt.Println("RunServer")
 	app.RunServer()
 	fmt.Println("RunServer")
 }
