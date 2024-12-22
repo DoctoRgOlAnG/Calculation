@@ -1,8 +1,8 @@
 # Калькулятор
 
-**Calc Go** — это сервис для выполнения математических вычислений на основе переданного выражения. Сервис предоставляет API для обработки запросов на вычисления, а также включает в себя набор тестов для проверки корректности работы.
+**Calculation** — это сервис для выполнения математических вычислений на основе переданного выражения.
 
-Проект написан на языке Go, организован в модульной структуре и содержит примеры использования.
+Проект написан на языке Go.
 
 ---
 
@@ -27,7 +27,7 @@ go run ./cmd/main.go
 
 Сервер запустится на порту `8080` по умолчанию. 
 
-## Использование API
+## Usega
 
 ### Endpoint
 
@@ -51,10 +51,10 @@ Example:
 
 ### Answer
 
-1. **Succese**
+1. **Successful**
 
-   **Статус-код:** `200 OK`  
-   **Пример ответа:**
+   **Status code:** `200 OK`  
+   **Example:**
 
    ```json
    {
@@ -65,7 +65,7 @@ Example:
 2. **Ответ по ошибке при обработки выражения**
 
    **Статус-код:** `422 Unprocessable Entity`  
-   **Пример ответа:**
+   **Example answer:**
 
    ```json
    {
@@ -75,8 +75,8 @@ Example:
 
 3. **Неподдерживаемый метод**
 
-   **Статус-код:** `405 Method Not Allowed`  
-   **Пример ответа:**
+   **Status code:** `405 Method Not Allowed`  
+   **Example answer:**
 
    ```json
    {
@@ -84,10 +84,10 @@ Example:
    }
    ```
 
-4. **Некорректное тело запроса**
+4. **Not correct body**
 
-   **Статус-код:** `400 Bad Request`  
-   **Пример ответа:**
+   **Statuc code:** `400 Bad Request`  
+   **Example answer:**
 
    ```json
    {
@@ -97,19 +97,19 @@ Example:
 
 ---
 
-## Примеры использования
+## Example
 
-1. **Успешный запрос**:
+1. **Successful**:
 
 ```bash
-curl --location 'http://localhost:8080/api/v1/calculate' \
+curl -H POST 'http://localhost:8080/api/v1/calculate' \
 --header 'Content-Type: application/json' \
 --data '{
   "expression": "2+10*10"
 }'
 ```
 
-Ответ:
+Answer:
 
 ```json
 {
@@ -117,17 +117,17 @@ curl --location 'http://localhost:8080/api/v1/calculate' \
 }
 ```
 
-2. **Ошибка: некорректное выражение**:
+2. **Error: not correct выражение**:
 
 ```bash
-curl --location 'http://localhost:8080/api/v1/calculate' \
+curl -H POST 'http://localhost:8080/api/v1/calculate' \
 --header 'Content-Type: application/json' \
 --data '{
   "expression": "17/(13+9{)"
 }'
 ```
 
-Ответ:
+Answer:
 
 ```json
 {
@@ -135,14 +135,14 @@ curl --location 'http://localhost:8080/api/v1/calculate' \
 }
 ```
 
-3. **Ошибка: неверный метод**:
+3. **Error: not correct method**:
 
 ```bash
-curl --location 'http://localhost:8080/api/v1/calculate' \
+curl -H GET 'http://localhost:8080/api/v1/calculate' \
 --header 'Content-Type: application/json'
 ```
 
-Ответ:
+Answer:
 
 ```json
 {
