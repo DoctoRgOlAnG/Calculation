@@ -43,18 +43,10 @@ func CalcHandler(w http.ResponseWriter, r *http.Request) {
 			errorMsg = "Division by zero"
 		case calculation.ErrMismatchedParentheses:
 			errorMsg = "Mismatched parentheses"
-		case calculation.ErrInvalidNumber:
-			errorMsg = "Invalid number"
-		case calculation.ErrUnexpectedToken:
-			errorMsg = "Unexpected token"
-		case calculation.ErrNotEnoughValues:
-			errorMsg = "Not enough values"
-		case calculation.ErrInvalidOperator:
-			errorMsg = "Invalid operator"
-		case calculation.ErrOperatorAtEnd:
-			errorMsg = "Operator at end"
-		case calculation.ErrMultipleDecimalPoints:
-			errorMsg = "Multiple decimal points"
+		case calculation.ErrMismatchedParentheses:
+			errorMsg = "mismatched parentheses"
+		case calculation.ErrUnmatchedParenthesess:
+			errorMsg = "unmatched parenthesess"
 		case calculation.ErrEmptyInput:
 			errorMsg = "Empty input"
 		default:
