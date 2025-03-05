@@ -1,158 +1,99 @@
-# Калькулятор
+Оркестратор
+Сервер, который имеет следующие endpoint-ы:
 
-**Calculation** — это сервис для выполнения математических вычислений на основе переданного выражения.
-
-Проект написан на языке Go.
-
----
-
-## Установка и запуск
-
-Для запуска проекта выполните следующие шаги:
-
-1. Склонируйте репозиторий:
-
-```bash
-git clone git@github.com:DoctoRgOlAnG/Calculation.git
-cd Calculation
-```
-
-2. Убедитесь, что Go установлен и находится в `$PATH` (проверить версию можно командой `go version`).
-3. Start testing
-    ```
-    go test ./internal
-    Answer
-    ok      doctor/internal 4.004s
-    ------------------------------
-    go test ./pkg
-    ok      doctor/pkg      0.172s
-    ```
-4. Запустите API-сервер:
-
-```bash
-go run ./cmd/main.go
-```
-
-Сервер запустится на порту `8080` по умолчанию. 
-
-## Usega
-
-### Endpoint
-
-```
-POST /api/v1/calculate
-```
-
-### Header
-
-- `Content-Type: application/json`
-
-### Body
-
-Example:
-
-```json
-{
-  "expression": "2+2*2"
-}
-```
-
-### Answer
-
-- **Successful**
-
-   **Status code:** `200 OK`  
-   **Example:**
-
-   ```json
-   {
-     "result": "6"
-   }
-   ```
-
-- **Ответ по ошибке при обработки выражения**
-
-   **Статус-код:** `422 Unprocessable Entity`  
-   **Example answer:**
-
-   ```json
-   {
-     "error": "Unprocessable Entity"
-   }
-   ```
-
-- **Неподдерживаемый метод**
-
-   **Status code:** `405 Method Not Allowed`  
-   **Example answer:**
-
-   ```json
-   {
-     "error": "Method Not Allowed"
-   }
-   ```
-
-- **Not correct body**
-
-   **Statuc code:** `400 Bad Request`  
-   **Example answer:**
-
-   ```json
-   {
-     "error": "Bad Request"
-   }
-   ```
-
----
-
-## Example
-
-- **Successful**:
-
-```bash
-curl -H POST 'http://localhost:8080/api/v1/calculate' \
+Добавление вычисления арифметического выражения
+curl --location 'localhost/api/v1/calculate' \
 --header 'Content-Type: application/json' \
 --data '{
-  "expression": "2+10*10"
+  "expression": <строка с выражение>
 }'
-```
+Коды ответа: 201 - выражение принято для вычисления, 422 - невалидные данные, 500 - что-то пошло не так
 
-Answer:
+Тело ответа
 
-```json
 {
-  "result": "102"
+    "id": <уникальный идентификатор выражения>
 }
-```
+Получение списка выражений
+curl --location 'localhost/api/v1/expressions'
+Тело ответа
 
-- **Error: calculation**:
+{
+    "expressions": [
+        {
+            "id": <идентификатор выражения>,
+            "status": <статус вычисления выражения>,
+            "result": <результат выражения>
+        },
+        {
+            "id": <идентификатор выражения>,
+            "status": <статус вычисления выражения>,
+            "result": <результат выражения>
+        }
+    ]
+}
+Коды ответа:
 
-```bash
-curl -H POST 'http://localhost:8080/api/v1/calculate' \
+200 - успешно получен список выражений
+500 - что-то пошло не так
+
+Получение выражения по его идентификатору
+
+curl --location 'localhost/api/v1/expressions/:id'
+Коды ответа:
+
+200 - успешно получено выражение
+404 - нет такого выражения
+500 - что-то пошло не так
+Тело ответа
+
+{
+    "expression":
+        {
+            "id": <идентификатор выражения>,
+            "status": <статус вычисления выражения>,
+            "result": <результат выражения>
+        }
+}
+Получение задачи для выполнения
+curl --location 'localhost/internal/task'
+Коды ответа:
+
+200 - успешно получена задача
+404 - нет задачи
+500 - что-то пошло не так
+Тело ответа
+
+{
+    "task":
+        {
+            "id": <идентификатор задачи>,
+            "arg1": <имя первого аргумента>,
+            "arg2": <имя второго аргумента>,
+            "operation": <операция>,
+            "operation_time": <время выполнения операции>
+        }
+}
+Прием результата обработки данных.
+curl --location 'localhost/internal/task' \
 --header 'Content-Type: application/json' \
 --data '{
-  "expression": "17/(13+9{)"
+  "id": 1,
+  "result": 2.5
 }'
-```
+Коды ответа:
 
-Answer:
+200 - успешно записан результат
+404 - нет такой задачи
+422 - невалидные данные
+500 - что-то пошло не так
+Время выполнения операций задается переменными среды в миллисекундах
+TIME_ADDITION_MS - время выполнения операции сложения в миллисекундах
+TIME_SUBTRACTION_MS - время выполнения операции вычитания в миллисекундах
+TIME_MULTIPLICATIONS_MS - время выполнения операции умножения в миллисекундах
+TIME_DIVISIONS_MS - время выполнения операции деления в миллисекундах
 
-```json
-{
-  "error": "Error calculate"
-}
-```
+Агент
+Демон, который получает выражение для вычисления с сервера, вычисляет его и отправляет на сервер результат выражения.
 
-- **Error: not correct method**:
-
-```bash
-curl -H GET 'http://localhost:8080/api/v1/calculate' \
---header 'Content-Type: application/json'
-```
-
-Answer:
-
-```json
-{
-  "error": "Wrong Method"
-}
+При старте демон запускает несколько горутин, каждая из которых выступает в роли независимого вычислителя. Количество горутин регулируется переменной среды COMPUTING_POWER
