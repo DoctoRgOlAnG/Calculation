@@ -67,25 +67,44 @@ func handlePostResult(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Получен результат: %+v", result)
 
 	mutex.Lock()
+	defer mutex.Unlock()
 
 	expr, exists := Expressions[result.ExpressionID]
 	if !exists {
-		mutex.Unlock()
 		log.Printf("Ошибка: Expression not found (ID: %s)", result.ExpressionID)
 		http.Error(w, "Expression not found", http.StatusNotFound)
 		return
 	}
 
+	// Проверяем, был ли результат для этой задачи уже сохранен
+	// if _, exists := expr.TaskResults[result.ID]; exists {
+	// 	log.Printf("Результат для задачи уже существует (TaskID: %s)", result.ID)
+	// 	http.Error(w, "Result for this task already exists", http.StatusConflict)
+	// 	return
+	// }
+
+	// Сохраняем результат задачи
+	expr.TaskResults[result.ID] = result.Result
 	expr.TaskResults[result.ID] = result.Result
 	log.Printf("Результат сохранён: ExpressionID=%s, TaskID=%s, Result=%f", result.ExpressionID, result.ID, result.Result)
 
+	// Если все задачи завершены, вычисляем итоговый результат
 	if len(expr.TaskResults) == len(expr.Tasks) {
-		expr.Result = &result.Result
+		finalResult := 0.0
+		for _, taskID := range expr.Tasks {
+			taskResult, exists := expr.TaskResults[taskID]
+			if !exists {
+				log.Printf("Ошибка: результат для задачи отсутствует (TaskID: %s)", taskID)
+				http.Error(w, "Internal server error: missing task result", http.StatusInternalServerError)
+				return
+			}
+			finalResult += taskResult
+		}
+
+		expr.Result = &finalResult
 		expr.Status = "completed"
 		log.Printf("Все задачи завершены. Статус выражения изменен на 'completed' (ExpressionID: %s)", result.ExpressionID)
 	}
-
-	mutex.Unlock()
 
 	w.WriteHeader(http.StatusOK)
 }

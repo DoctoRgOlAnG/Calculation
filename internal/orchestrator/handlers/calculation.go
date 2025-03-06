@@ -6,6 +6,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -93,6 +94,30 @@ func CalculateHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 
 }
+func computeTaskResult(task *Task) (float64, error) {
+	arg1, ok1 := task.Arg1.(float64)
+	arg2, ok2 := task.Arg2.(float64)
+
+	if !ok1 || !ok2 {
+		return 0, fmt.Errorf("invalid arguments")
+	}
+
+	switch task.Operation {
+	case "+":
+		return arg1 + arg2, nil
+	case "-":
+		return arg1 - arg2, nil
+	case "*":
+		return arg1 * arg2, nil
+	case "/":
+		if arg2 == 0 {
+			return 0, fmt.Errorf("division by zero")
+		}
+		return arg1 / arg2, nil
+	default:
+		return 0, fmt.Errorf("unsupported operation: %s", task.Operation)
+	}
+}
 
 func createTasks(expr ast.Expr, parentExprID string) (string, error) {
 	switch v := expr.(type) {
@@ -106,51 +131,50 @@ func createTasks(expr ast.Expr, parentExprID string) (string, error) {
 			return "", fmt.Errorf("failed to process expression")
 		}
 
-		taskChannel := make(chan *Task, 2)
-		var wg sync.WaitGroup
-		wg.Add(2)
-		go func() {
-			defer wg.Done()
-			arg1, isReady1 := waitForResult(arg1ID, parentExprID)
-			if isReady1 {
-				taskChannel <- &Task{ID: taskID, ExpressionID: parentExprID, Arg1: arg1, Operation: v.Op.String()}
-			} else {
-				taskChannel <- nil
-			}
-		}()
+		arg1, isReady1 := waitForResult(arg1ID, parentExprID)
+		arg2, isReady2 := waitForResult(arg2ID, parentExprID)
 
-		go func() {
-			defer wg.Done()
-			arg2, isReady2 := waitForResult(arg2ID, parentExprID)
-			if isReady2 {
-				taskChannel <- &Task{ID: taskID, ExpressionID: parentExprID, Arg2: arg2, Operation: v.Op.String()}
-			} else {
-				taskChannel <- nil
-			}
-		}()
-		wg.Wait()
-		close(taskChannel)
-
-		task, ok := <-taskChannel
-		if !ok {
-			fmt.Println("Канал закрыт")
+		if !isReady1 || !isReady2 {
+			return "", fmt.Errorf("arguments are not ready")
 		}
-		Tasks[taskID] = task
+
+		task := &Task{
+			ID:           taskID,
+			ExpressionID: parentExprID,
+			Arg1:         arg1,
+			Arg2:         arg2,
+			Operation:    v.Op.String(),
+		}
+
+		result, err := computeTaskResult(task)
+		if err != nil {
+			return "", fmt.Errorf("failed to compute task result: %v", err)
+		}
 
 		mutex.Lock()
+		Tasks[taskID] = task
 		Expressions[parentExprID].Tasks = append(Expressions[parentExprID].Tasks, taskID)
+		Expressions[parentExprID].TaskResults[taskID] = result
 		mutex.Unlock()
 
 		return taskID, nil
 
 	case *ast.BasicLit:
+		value, err := strconv.ParseFloat(v.Value, 64)
+		if err != nil {
+			return "", fmt.Errorf("failed to parse basic literal: %v", err)
+		}
+
+		mutex.Lock()
+		Expressions[parentExprID].TaskResults[v.Value] = value
+		mutex.Unlock()
+
 		return v.Value, nil
 
 	default:
 		return "", fmt.Errorf("unsupported expression")
 	}
 }
-
 func waitForResult(taskID string, parentExprID string) (interface{}, bool) {
 	for i := 0; i < 10; i++ {
 		mutex.Lock()
