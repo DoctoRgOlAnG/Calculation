@@ -21,25 +21,40 @@ func handleGetTask(w http.ResponseWriter) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
+	var taskToSend *Task
+	var taskID string
+
+	// Ищем первую не-nil задачу
 	for id, task := range Tasks {
-		log.Printf("Отправляем задачу агенту: ID=%s, ExpressionID=%s, Arg1=%f, Arg2=%f, Operation=%s",
-			task.ID, task.ExpressionID, task.Arg1, task.Arg2, task.Operation)
-
-		response := map[string]*Task{"task": task}
-
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(response); err != nil {
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
+		if task != nil {
+			taskToSend = task
+			taskID = id
+			break
 		}
+	}
 
-		delete(Tasks, id)
+	if taskToSend == nil {
+		// Если задач нет, отправляем сообщение
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{"message": "No tasks available"})
 		return
 	}
 
+	// Логируем задачу
+	log.Printf("Отправляем задачу агенту: ID=%s, ExpressionID=%s, Arg1=%v, Arg2=%v, Operation=%s",
+		taskToSend.ID, taskToSend.ExpressionID, taskToSend.Arg1, taskToSend.Arg2, taskToSend.Operation)
+
+	// Отправляем задачу клиенту
+	response := map[string]*Task{"task": taskToSend}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "No tasks available"})
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// Удаляем задачу из мапы
+	delete(Tasks, taskID)
 }
 
 func handlePostResult(w http.ResponseWriter, r *http.Request) {

@@ -86,7 +86,6 @@ func CalculateHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to process expression", http.StatusInternalServerError)
 		return
 	}
-	fmt.Println(err)
 
 	response := CalcResponse{ID: exprID}
 	w.Header().Set("Content-Type", "application/json")
