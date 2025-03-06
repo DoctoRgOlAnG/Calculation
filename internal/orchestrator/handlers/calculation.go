@@ -51,7 +51,7 @@ var (
 )
 
 func CalculateHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("hi")
+
 	var req CalcRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid JSON", http.StatusUnprocessableEntity)
@@ -63,13 +63,13 @@ func CalculateHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Expression not valid", http.StatusUnprocessableEntity)
 		return
 	}
-	fmt.Println("hi")
+
 	node, err := parser.ParseExpr(expr)
 	if err != nil {
 		http.Error(w, "Fail to parse", http.StatusInternalServerError)
 		return
 	}
-	fmt.Println("hi")
+
 	exprID := uuid.New().String()
 
 	mutex.Lock()
@@ -80,19 +80,19 @@ func CalculateHandler(w http.ResponseWriter, r *http.Request) {
 		TaskResults: make(map[string]float64),
 	}
 	mutex.Unlock()
-	fmt.Println("hi")
+
 	_, err = createTasks(node, exprID)
 	if err != nil {
 		http.Error(w, "Failed to process expression", http.StatusInternalServerError)
 		return
 	}
 	fmt.Println(err)
-	fmt.Println("hi")
+
 	response := CalcResponse{ID: exprID}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(response)
-	fmt.Println("hi")
+
 }
 
 func createTasks(expr ast.Expr, parentExprID string) (string, error) {
@@ -108,20 +108,29 @@ func createTasks(expr ast.Expr, parentExprID string) (string, error) {
 		}
 
 		taskChannel := make(chan *Task, 2)
-
+		var wg sync.WaitGroup
+		wg.Add(2)
 		go func() {
+			defer wg.Done()
 			arg1, isReady1 := waitForResult(arg1ID, parentExprID)
 			if isReady1 {
 				taskChannel <- &Task{ID: taskID, ExpressionID: parentExprID, Arg1: arg1, Operation: v.Op.String()}
+			} else {
+				taskChannel <- nil
 			}
 		}()
 
 		go func() {
+			defer wg.Done()
 			arg2, isReady2 := waitForResult(arg2ID, parentExprID)
 			if isReady2 {
 				taskChannel <- &Task{ID: taskID, ExpressionID: parentExprID, Arg2: arg2, Operation: v.Op.String()}
+			} else {
+				taskChannel <- nil
 			}
 		}()
+		wg.Wait()
+		close(taskChannel)
 
 		task, ok := <-taskChannel
 		if !ok {
